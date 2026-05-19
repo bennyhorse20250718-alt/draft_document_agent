@@ -1,0 +1,34 @@
+"""
+FastAPI application entry point.
+"""
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.config import get_settings
+from app.routes import documents, search, draft, export
+
+settings = get_settings()
+
+app = FastAPI(
+    title="Draft Document AI Agent",
+    description="RAG-powered official document drafting assistant",
+    version="1.0.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.origins_list,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(documents.router)
+app.include_router(search.router)
+app.include_router(draft.router)
+app.include_router(export.router)
+
+
+@app.get("/health", tags=["Health"])
+def health():
+    return {"status": "ok"}
