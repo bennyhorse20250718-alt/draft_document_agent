@@ -19,9 +19,15 @@ settings = get_settings()
 async def lifespan(app: FastAPI):
     # Eagerly initialise the retrieval service (loads embedding model +
     # connects to Chroma) so the first real request is not slow.
+    # A failure here (e.g. Chroma Cloud unreachable) is logged but does NOT
+    # crash uvicorn — the service still starts and returns a proper error on
+    # requests until Chroma becomes reachable.
     logger.info("Pre-loading retrieval service...")
-    get_retrieval_service()
-    logger.info("Retrieval service ready.")
+    try:
+        get_retrieval_service()
+        logger.info("Retrieval service ready.")
+    except Exception as exc:
+        logger.error("Retrieval service failed to initialise: %s", exc)
     yield
 
 app = FastAPI(
