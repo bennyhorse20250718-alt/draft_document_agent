@@ -289,12 +289,13 @@ class GenerationService:
         context: str = "",
     ) -> str:
         """Rewrite a specific section of the document."""
+        context_prefix = f"Document context:\n{context}\n\n" if context else ""
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
             {
                 "role": "user",
                 "content": (
-                    f"{'Document context:\n' + context + '\n\n' if context else ''}"
+                    f"{context_prefix}"
                     f"Rewrite this section according to the instruction.\n\n"
                     f"Section:\n{section_text}\n\n"
                     f"Instruction: {instruction}\n\n"
