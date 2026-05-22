@@ -10,7 +10,7 @@ import logging
 
 import fitz  # PyMuPDF
 from docx import Document as DocxDocument
-from sentence_transformers import SentenceTransformer
+from fastembed import TextEmbedding
 
 from app.config import get_settings
 from app.chroma_client import get_chroma_client
@@ -32,7 +32,11 @@ class IngestionService:
             name=COLLECTION_NAME,
             metadata={"hnsw:space": "cosine"},
         )
-        self._embedder = SentenceTransformer(settings.embedding_model)
+        # Normalise short name → full HuggingFace path that fastembed expects
+        model_name = settings.embedding_model
+        if "/" not in model_name:
+            model_name = f"sentence-transformers/{model_name}"
+        self._embedder = TextEmbedding(model_name=model_name)
 
     # ------------------------------------------------------------------
     # Public API
@@ -75,9 +79,10 @@ class IngestionService:
             self._collection.delete(ids=existing["ids"])
 
         ids, embeddings, docs, metas = [], [], [], []
-        for i, chunk in enumerate(chunks):
+        # Batch-embed all chunks in one pass (more efficient with fastembed)
+        chunk_embeddings = [e.tolist() for e in self._embedder.embed(chunks)]
+        for i, (chunk, embedding) in enumerate(zip(chunks, chunk_embeddings)):
             chunk_id = f"{doc_id}_chunk_{i}"
-            embedding = self._embedder.encode(chunk).tolist()
             ids.append(chunk_id)
             embeddings.append(embedding)
             docs.append(chunk)

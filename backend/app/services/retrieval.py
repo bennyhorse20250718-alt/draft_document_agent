@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Optional
 import logging
 
-from sentence_transformers import SentenceTransformer
+from fastembed import TextEmbedding
 
 from app.config import get_settings
 from app.chroma_client import get_chroma_client
@@ -28,7 +28,11 @@ class RetrievalService:
             name=COLLECTION_NAME,
             metadata={"hnsw:space": "cosine"},
         )
-        self._embedder = SentenceTransformer(settings.embedding_model)
+        # Normalise short name → full HuggingFace path that fastembed expects
+        model_name = settings.embedding_model
+        if "/" not in model_name:
+            model_name = f"sentence-transformers/{model_name}"
+        self._embedder = TextEmbedding(model_name=model_name)
 
     def search(
         self,
@@ -40,7 +44,7 @@ class RetrievalService:
         Hybrid search: semantic vector search + keyword re-ranking.
         Returns deduplicated results grouped by source document.
         """
-        query_embedding = self._embedder.encode(query).tolist()
+        query_embedding = list(self._embedder.embed([query]))[0].tolist()
 
         where_clause = None
         if filters:

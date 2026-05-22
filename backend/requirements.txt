@@ -10,7 +10,8 @@ python-docx==1.1.2
 pypdf==5.1.0
 
 # Embeddings & Vector Store
-sentence-transformers==3.3.1
+# fastembed uses ONNX Runtime instead of PyTorch — ~80 MB vs ~350 MB memory
+fastembed>=0.3.6
 chromadb
 
 # LLM (LM Studio exposes OpenAI-compatible API)
