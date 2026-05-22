@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     llm_base_url: str = Field(default="https://openrouter.ai/api/v1", alias="LLM_BASE_URL")
     llm_api_key: str = Field(default="", alias="LLM_API_KEY")
     llm_model: str = Field(default="openai/gpt-4o-mini", alias="LLM_MODEL")
+    llm_max_tokens: int = Field(default=16384, alias="LLM_MAX_TOKENS")
 
     # Optional OpenRouter HTTP headers
     openrouter_site_url: str = Field(default="", alias="OPENROUTER_SITE_URL")

@@ -37,9 +37,19 @@ export default function ReferencePanel({ results, selected, onSelectionChange, o
   function openPreview(doc: SearchResult) {
     if (preview?.doc_id === doc.doc_id) return;
     setPdfError(false);
-    // Append a cache-busting timestamp so the browser never serves a stale PDF
     const pdfUrl = `${getPdfUrl(doc.doc_id)}?t=${Date.now()}`;
-    setPreview({ source: doc.source, doc_id: doc.doc_id, pdfUrl, text: null, mode: "pdf" });
+    // HEAD-check first: iframe.onError doesn't fire for HTTP 404, so we probe
+    // the PDF endpoint before deciding which mode to open.
+    fetch(pdfUrl, { method: "HEAD" })
+      .then(res => {
+        const available = res.ok;
+        if (!available) setPdfError(true);
+        setPreview({ source: doc.source, doc_id: doc.doc_id, pdfUrl, text: null, mode: available ? "pdf" : "text" });
+      })
+      .catch(() => {
+        setPdfError(true);
+        setPreview({ source: doc.source, doc_id: doc.doc_id, pdfUrl, text: null, mode: "text" });
+      });
     previewDocument(doc.doc_id)
       .then(data => setPreview(p => p && p.doc_id === doc.doc_id ? { ...p, text: data.text } : p))
       .catch(() => {});

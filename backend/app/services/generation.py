@@ -149,6 +149,7 @@ class GenerationService:
             default_headers=default_headers or None,
         )
         self._model = settings.llm_model
+        self._max_tokens = settings.llm_max_tokens
 
     async def generate_draft(
         self,
@@ -167,7 +168,7 @@ class GenerationService:
             model=self._model,
             messages=messages,
             temperature=0.4,
-            max_tokens=4096,
+            max_tokens=self._max_tokens,
         )
         return _strip_think_tags(response.choices[0].message.content or "")
 
@@ -189,7 +190,7 @@ class GenerationService:
             model=self._model,
             messages=messages,
             temperature=0.4,
-            max_tokens=4096,
+            max_tokens=self._max_tokens,
         )
         draft = _strip_think_tags(response.choices[0].message.content or "")
         # Enrich citations with the most relevant passage from each reference chunk
@@ -218,7 +219,7 @@ class GenerationService:
             model=self._model,
             messages=messages,
             temperature=0.4,
-            max_tokens=4096,
+            max_tokens=self._max_tokens,
             stream=True,
         )
         buf = ""
